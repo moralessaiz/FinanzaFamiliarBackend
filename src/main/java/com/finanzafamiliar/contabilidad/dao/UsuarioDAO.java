@@ -67,6 +67,30 @@ public class UsuarioDAO {
     }
 
     /**
+     * READ - Busca los usuarios cuyo nombre contenga el texto indicado.
+     *
+     * Se agrega en la evidencia GA7-220501096-AA2-EV02 para atender el
+     * buscador por parametro GET ("nombre") del modulo web de usuarios
+     * (ListarUsuariosServlet).
+     */
+    public List<Usuario> buscarPorNombre(String texto) throws SQLException {
+        String sql = "SELECT id_usuario, nombre, correo, rol FROM usuario WHERE nombre LIKE ? ORDER BY nombre";
+        List<Usuario> usuarios = new ArrayList<>();
+
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+
+            sentencia.setString(1, "%" + texto + "%");
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                while (resultado.next()) {
+                    usuarios.add(mapearUsuario(resultado));
+                }
+            }
+        }
+        return usuarios;
+    }
+
+    /**
      * READ - Consulta un usuario especifico por su identificador.
      *
      * @return el usuario encontrado, o null si no existe.
