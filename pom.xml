@@ -8,21 +8,38 @@
     <groupId>com.finanzafamiliar</groupId>
     <artifactId>finanzafamiliar-backend</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <!-- war = aplicacion web (Servlets + JSP) que se despliega en un servidor -->
+    <packaging>war</packaging>
 
     <name>FinanzaFamiliar Backend</name>
-    <description>Sistema de Contabilidad Familiar - modulos de usuarios y movimientos con JDBC y MySQL</description>
+    <description>Sistema de Contabilidad Familiar - modulos web de usuarios y movimientos con Servlets, JSP, JDBC y MySQL</description>
 
     <properties>
         <!-- Version de Java del proyecto (igual a la usada en NetBeans) -->
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Clase principal: la usan NetBeans (Run Project) y "mvn exec:java" -->
+        <!-- Prueba de consola del CRUD (evidencia EV01): "mvn compile exec:java" -->
         <exec.mainClass>com.finanzafamiliar.contabilidad.app.Main</exec.mainClass>
     </properties>
 
     <dependencies>
+        <!-- API de Servlets (Jakarta EE 10). "provided": la aporta el servidor (Jetty o Tomcat 10.1+) -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- API de JSP. Tambien la aporta el servidor; aqui solo sirve para que el IDE reconozca los JSP -->
+        <dependency>
+            <groupId>jakarta.servlet.jsp</groupId>
+            <artifactId>jakarta.servlet.jsp-api</artifactId>
+            <version>3.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Driver JDBC de MySQL (reemplaza el .jar de la carpeta lib/) -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -32,11 +49,36 @@
     </dependencies>
 
     <build>
+        <!-- Nombre del archivo generado: target/finanzafamiliar.war -->
+        <finalName>finanzafamiliar</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <!--
+                Servidor Jetty embebido: ejecuta la aplicacion web con "mvn jetty:run"
+                sin instalar Tomcat. Puerto 8081, igual que el modulo de Amalfi.
+                Abrir http://localhost:8081/
+            -->
+            <plugin>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-maven-plugin</artifactId>
+                <version>12.0.16</version>
+                <configuration>
+                    <httpConnector>
+                        <port>8081</port>
+                    </httpConnector>
+                    <webApp>
+                        <contextPath>/</contextPath>
+                    </webApp>
+                </configuration>
             </plugin>
         </plugins>
     </build>

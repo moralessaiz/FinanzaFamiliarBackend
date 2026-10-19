@@ -2,14 +2,17 @@
 
 # 💰 FinanzaFamiliarBackend
 
-### Sistema de Contabilidad Familiar — Backend Java + JDBC + MySQL
+### Sistema de Contabilidad Familiar — Java + Servlets + JSP + JDBC + MySQL
 
-Módulos de **Usuarios** y **Movimientos** (ingresos y gastos del hogar) con las cuatro operaciones del CRUD sobre una base de datos MySQL, usando JDBC puro.
+Módulos de **Usuarios** y **Movimientos** (ingresos y gastos del hogar): CRUD con JDBC probado en consola y **aplicación web** con formularios HTML, servlets (`GET` y `POST`) y páginas JSP.
 
 ![Java](https://img.shields.io/badge/Java-17%2B-orange?logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9-C71A36?logo=apachemaven&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
 ![JDBC](https://img.shields.io/badge/JDBC-Connector%2FJ%2026.7.0-00758F)
+![Jakarta Servlet](https://img.shields.io/badge/Jakarta%20Servlet-6.0-F8981D)
+![JSP](https://img.shields.io/badge/JSP-3.1-F8981D)
+![Jetty](https://img.shields.io/badge/Jetty-12-FC390E?logo=eclipsejetty&logoColor=white)
 ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ%20IDEA-compatible-000000?logo=intellijidea&logoColor=white)
 ![NetBeans](https://img.shields.io/badge/NetBeans-compatible-1B6AC6?logo=apachenetbeanside&logoColor=white)
 
@@ -29,23 +32,30 @@ Módulos de **Usuarios** y **Movimientos** (ingresos y gastos del hogar) con las
 6. [Paso 3B — Ejecutar con NetBeans](#-paso-3b--ejecutar-con-netbeans)
 7. [Paso 3C — Ejecutar desde la terminal (opcional)](#-paso-3c--ejecutar-desde-la-terminal-opcional)
 8. [Resultado esperado](#-resultado-esperado)
-9. [Estructura del proyecto](#-estructura-del-proyecto)
-10. [Modelo de la base de datos](#-modelo-de-la-base-de-datos)
-11. [Solución de problemas](#-solución-de-problemas)
-12. [Estándares de codificación](#-estándares-de-codificación)
-13. [Trabajo en equipo con Git](#-trabajo-en-equipo-con-git)
-14. [Autores](#-autores)
+9. [Paso 4 — Ejecutar la aplicación web](#-paso-4--ejecutar-la-aplicación-web)
+10. [¿Cómo funciona la parte web?](#-cómo-funciona-la-parte-web)
+11. [Estructura del proyecto](#-estructura-del-proyecto)
+12. [Modelo de la base de datos](#-modelo-de-la-base-de-datos)
+13. [Solución de problemas](#-solución-de-problemas)
+14. [Estándares de codificación](#-estándares-de-codificación)
+15. [Trabajo en equipo con Git](#-trabajo-en-equipo-con-git)
+16. [Autores](#-autores)
 
 ---
 
 ## 🎯 ¿Qué hace este proyecto?
 
-Es una aplicación de consola en Java que se conecta a MySQL por medio de **JDBC** y prueba el CRUD completo de dos módulos:
+El proyecto se conecta a MySQL por medio de **JDBC** y tiene dos formas de uso:
 
-| Módulo | Tabla | Crear | Consultar | Actualizar | Eliminar |
-|:--|:--|:--:|:--:|:--:|:--:|
-| 👤 **Usuarios** | `usuario` | ✅ | ✅ | ✅ | ✅ |
-| 💸 **Movimientos** | `movimiento` | ✅ | ✅ | ✅ | ✅ |
+| Parte | ¿Qué hace? | Evidencia | Cómo se ejecuta |
+|:--|:--|:--|:--|
+| 🖥️ **Consola** | `Main.java` prueba el CRUD completo de los dos módulos | `GA7-220501096-AA2-EV01` | [Paso 3](#-paso-3a--ejecutar-con-intellij-idea) |
+| 🌐 **Web** | Formularios HTML que envían datos a servlets por `GET` y `POST`, y páginas JSP que muestran los resultados | `GA7-220501096-AA2-EV02` | [Paso 4](#-paso-4--ejecutar-la-aplicación-web) |
+
+| Módulo | Tabla | Crear | Consultar | Actualizar | Eliminar | Web |
+|:--|:--|:--:|:--:|:--:|:--:|:--|
+| 👤 **Usuarios** | `usuario` | ✅ | ✅ | ✅ | ✅ | Registrar (POST) y buscar por nombre (GET) |
+| 💸 **Movimientos** | `movimiento` | ✅ | ✅ | ✅ | ✅ | Registrar (POST) y filtrar por tipo (GET) |
 
 Todas las consultas usan `PreparedStatement` para evitar inyección SQL, y las conexiones se cierran solas con `try-with-resources`.
 
@@ -65,6 +75,8 @@ Instala lo siguiente **antes de empezar**:
 
 > [!NOTE]
 > **No necesitas descargar el driver de MySQL (`.jar`) a mano.** El proyecto usa **Maven**, que lo descarga automáticamente la primera vez que se abre el proyecto (se necesita internet). Tampoco hace falta instalar Maven: IntelliJ y NetBeans ya lo traen incluido.
+>
+> **Tampoco necesitas instalar Tomcat.** La aplicación web se ejecuta con un servidor **Jetty** que Maven descarga y arranca solo (`jetty:run`).
 
 > [!IMPORTANT]
 > Ten a mano la **contraseña del usuario `root` de MySQL**, la que pusiste al instalar MySQL Server. La vas a necesitar en el Paso 2.
@@ -188,7 +200,7 @@ Este script crea el siguiente usuario, que coincide con los datos de [`ConexionB
 ### Abrir el proyecto
 
 1. Abre IntelliJ IDEA → **File → Open…**
-2. Selecciona la carpeta **`FinanzaFamiliar`** (la que contiene el archivo `pom.xml`) y presiona **OK**.
+2. Selecciona la carpeta **`FinanzaFamiliarBackend`** (la que contiene el archivo `pom.xml`) y presiona **OK**.
 3. Si pregunta, elige **Open as Project** y luego **Trust Project**.
 4. Espera a que termine la barra de progreso inferior: IntelliJ está descargando el driver de MySQL con Maven.
 
@@ -208,7 +220,7 @@ Este script crea el siguiente usuario, que coincide con los datos de [`ConexionB
 2. Presiona 🔄 **Reload All Maven Projects**.
 3. En **Dependencies** debe aparecer `com.mysql:mysql-connector-j:26.7.0`.
 
-### Ejecutar
+### Ejecutar la prueba de consola
 
 1. En el panel **Project**, abre `src/main/java/com/finanzafamiliar/contabilidad/app/Main.java`.
 2. Haz clic en el ▶️ **verde** que aparece al lado de `public static void main` → **Run 'Main.main()'**.
@@ -224,7 +236,7 @@ Este script crea el siguiente usuario, que coincide con los datos de [`ConexionB
 ### Abrir el proyecto
 
 1. Abre NetBeans → **File → Open Project…** (`Ctrl + Shift + O`).
-2. Busca la carpeta **`FinanzaFamiliar`**. NetBeans la muestra con un ícono especial de Maven (**ma**) porque contiene el `pom.xml`.
+2. Busca la carpeta **`FinanzaFamiliarBackend`**. NetBeans la muestra con un ícono especial de Maven (**ma**) porque contiene el `pom.xml`.
 3. Selecciónala y presiona **Open Project**.
 4. La primera vez, NetBeans descarga las dependencias. Si el proyecto aparece con un ⚠️ o en rojo, clic derecho sobre el proyecto → **Resolve Project Problems…** → **Resolve**, o bien clic derecho → **Build with Dependencies**.
 
@@ -236,14 +248,12 @@ Este script crea el siguiente usuario, que coincide con los datos de [`ConexionB
 4. En **Sources**, verifica que **Source/Binary Format** sea `17`.
 5. Presiona **OK**.
 
-### Ejecutar
+### Ejecutar la prueba de consola
 
-Tienes dos opciones:
+En *Projects*, abre **Source Packages → `com.finanzafamiliar.contabilidad.app`**, clic derecho sobre `Main.java` → **Run File** (`Shift + F6`).
 
-| Opción | Cómo | Atajo |
-|:--|:--|:--:|
-| ▶️ **Run Project** | Botón verde ▶️ de la barra superior. La clase principal ya está definida en el `pom.xml` (`exec.mainClass`) | `F6` |
-| 📄 **Run File** | En *Projects*, abre **Source Packages → `com.finanzafamiliar.contabilidad.app`**, clic derecho sobre `Main.java` → **Run File** | `Shift + F6` |
+> [!NOTE]
+> El botón **Run Project** (`F6`) ya no sirve para la consola: como el proyecto ahora es una aplicación web (`war`), NetBeans intenta desplegarlo en un servidor. Para la parte web sigue el [Paso 4](#-paso-4--ejecutar-la-aplicación-web).
 
 El resultado aparece en la ventana **Output** → mira el [resultado esperado](#-resultado-esperado).
 
@@ -300,42 +310,217 @@ Si todo está bien configurado, la consola mostrará algo parecido a esto (los `
 
 ---
 
+## 🌐 Paso 4 — Ejecutar la aplicación web
+
+> [!IMPORTANT]
+> La base de datos debe estar creada ([Paso 2](#-paso-2--crear-la-base-de-datos-en-mysql-workbench)) y el servicio de MySQL encendido.
+
+### 🟣 Con IntelliJ IDEA
+
+1. Abre el panel **Maven** (ícono **m** de la barra lateral derecha) y presiona 🔄 **Reload All Maven Projects**.
+2. Despliega **finanzafamiliar-backend → Plugins → jetty**.
+3. Haz **doble clic en `jetty:run`**.
+4. Espera a que la consola muestre:
+
+   ```text
+   [INFO] Started ServerConnector@...{HTTP/1.1, (http/1.1)}{0.0.0.0:8081}
+   [INFO] Started oejs.Server@...
+   ```
+
+5. Abre en el navegador 👉 **http://localhost:8081/**
+
+> 💡 Si quieres tenerlo como botón ▶️, haz clic derecho sobre `jetty:run` → **Modify Run Configuration…** → **OK**. Queda guardado en el selector de ejecución de la barra superior.
+
+### 🔵 Con NetBeans
+
+1. Clic derecho sobre el proyecto → **Run Maven → Goals…**
+2. En **Goals** escribe `jetty:run`, marca **Remember as:** `Jetty` y presiona **OK**.
+3. Cuando la ventana **Output** diga `Started ServerConnector ... 8081`, abre **http://localhost:8081/**
+4. Las siguientes veces: clic derecho → **Run Maven → Jetty**.
+
+### ⌨️ Desde la terminal
+
+```bash
+mvn jetty:run
+```
+
+### Detener el servidor
+
+La consola se queda "pegada" mientras el servidor está encendido. Eso es normal: está esperando peticiones del navegador. Para apagarlo, presiona el cuadro rojo ⏹ del IDE, o `Ctrl + C` en la terminal.
+
+### Páginas disponibles
+
+| URL | Servlet | Método | ¿Qué muestra? |
+|:--|:--|:--:|:--|
+| `http://localhost:8081/` | — (`index.jsp`) | GET | Página de inicio con los dos módulos |
+| `/usuarios` | `ListarUsuariosServlet` | GET | Lista de integrantes del grupo familiar |
+| `/usuarios?nombre=cris` | `ListarUsuariosServlet` | GET | Búsqueda de usuarios por nombre |
+| `/usuarios/registrar` | `RegistrarUsuarioServlet` | GET | Formulario vacío para registrar un usuario |
+| `/usuarios/registrar` | `RegistrarUsuarioServlet` | **POST** | Guarda el usuario enviado por el formulario |
+| `/movimientos` | `ListarMovimientosServlet` | GET | Lista de ingresos y gastos |
+| `/movimientos?tipo=gasto` | `ListarMovimientosServlet` | GET | Filtro por tipo (`ingreso`, `gasto` o `todos`) |
+| `/movimientos/registrar` | `RegistrarMovimientoServlet` | GET | Formulario con categorías y usuarios cargados desde MySQL |
+| `/movimientos/registrar` | `RegistrarMovimientoServlet` | **POST** | Guarda el movimiento enviado por el formulario |
+
+### Prueba rápida
+
+1. Entra a **Registrar usuario**, llena el formulario y presiona **Guardar usuario**. Debes llegar a la lista con el mensaje verde *"Usuario registrado correctamente (id …)"*.
+2. Escribe parte del nombre en **Buscar por nombre** y presiona **Buscar**. Fíjate que la URL cambia a `/usuarios?nombre=...`: eso es **GET**.
+3. Entra a **Registrar movimiento**. El nuevo usuario ya aparece en la lista **Registrado por**. Guarda un gasto.
+4. En **Movimientos**, cambia el filtro a **Gastos**. La URL cambia a `/movimientos?tipo=gasto`.
+5. Prueba la validación del servlet: registra un usuario cuyo nombre sean **solo espacios**. El navegador lo deja pasar, pero el servlet lo rechaza: aparece un mensaje rojo y el formulario conserva lo que habías escrito.
+
+---
+
+## 🧠 ¿Cómo funciona la parte web?
+
+### Recorrido de una petición
+
+El proyecto sigue el patrón **MVC**: el **servlet** es el controlador, la **JSP** es la vista y el **modelo/DAO** maneja los datos.
+
+```mermaid
+sequenceDiagram
+    actor U as 🧑 Navegador
+    participant S as ⚙️ RegistrarUsuarioServlet
+    participant D as 📦 UsuarioDAO
+    participant B as 🐬 MySQL
+    participant L as ⚙️ ListarUsuariosServlet
+    participant J as 📄 usuarios/listar.jsp
+
+    U->>S: POST /usuarios/registrar (nombre, correo, rol)
+    S->>S: request.getParameter(...) y validación
+    S->>D: insertar(usuario)
+    D->>B: INSERT INTO usuario ...
+    B-->>D: id generado
+    S-->>U: sendRedirect("/usuarios?registrado=id")
+    U->>L: GET /usuarios?registrado=id
+    L->>D: consultarTodos()
+    D->>B: SELECT ... FROM usuario
+    L->>J: request.setAttribute("usuarios", lista) + forward
+    J-->>U: HTML con la tabla de usuarios
+```
+
+1. El **formulario HTML** dice a qué URL enviar los datos (`action`) y con qué método (`method="get"` o `method="post"`).
+2. La anotación **`@WebServlet("/usuarios/registrar")`** conecta esa URL con la clase Java.
+3. El servidor llama a **`doGet`** o a **`doPost`**, según el método del formulario.
+4. El servlet lee los campos con **`request.getParameter("nombre")`**, valida y llama al **DAO**.
+5. Para mostrar datos, guarda el resultado con **`request.setAttribute(...)`** y hace **`forward`** a la JSP.
+6. La **JSP** lee el atributo y genera el HTML que ve el usuario.
+
+### GET vs POST
+
+| | **GET** | **POST** |
+|:--|:--|:--|
+| ¿Dónde viajan los datos? | En la URL: `/usuarios?nombre=cris` | En el cuerpo de la petición (no se ven en la URL) |
+| ¿Para qué se usa? | Consultar, buscar, filtrar | Crear o modificar datos |
+| En este proyecto | Buscar usuarios, filtrar movimientos, abrir formularios | Guardar usuarios y movimientos |
+| Método del servlet | `doGet(request, response)` | `doPost(request, response)` |
+| ¿Se puede guardar en favoritos? | ✅ Sí | ❌ No |
+
+Después de un POST exitoso, el servlet **no** muestra la JSP directamente: hace `response.sendRedirect(...)` hacia la lista. Así, si el usuario recarga la página (F5), el navegador repite el GET y no guarda el registro dos veces. A esto se le llama patrón **POST-Redirect-GET**.
+
+### `forward` vs `sendRedirect`
+
+| | `request.getRequestDispatcher(vista).forward(...)` | `response.sendRedirect(url)` |
+|:--|:--|:--|
+| ¿Qué pasa? | El servidor pasa la misma petición a la JSP | El servidor le dice al navegador que pida otra URL |
+| ¿Cambia la URL del navegador? | No | Sí |
+| ¿Se conservan los atributos? | ✅ Sí (`setAttribute`) | ❌ No (se envían como parámetro, por ejemplo `?registrado=5`) |
+| En este proyecto | Mostrar listas y formularios, y los mensajes de error | Después de guardar con POST |
+
+### Elementos JSP utilizados
+
+| Elemento | Sintaxis | ¿Para qué? | Dónde verlo |
+|:--|:--|:--|:--|
+| **Directiva `page`** | `<%@ page import="..." %>` | Configura la página e importa clases Java | Todas las JSP |
+| **Directiva `include`** | `<%@ include file="pie.jspf" %>` | Copia otro archivo dentro de la JSP **antes** de compilarla (inclusión estática) | Pie de página |
+| **Acción `<jsp:include>`** | `<jsp:include page="..."><jsp:param .../></jsp:include>` | Ejecuta otra JSP en **cada petición** y le pasa parámetros (inclusión dinámica) | Menú de navegación (`encabezado.jsp`) |
+| **Scriptlet** | `<% for (Usuario u : usuarios) { %>` | Código Java: ciclos, condiciones, variables | Tablas de `listar.jsp` |
+| **Expresión** | `<%= u.getNombre() %>` | Imprime un valor dentro del HTML | Celdas de las tablas |
+| **Declaración** | `<%! private String saludoSegunHora() { ... } %>` | Declara un método o atributo de la página | `index.jsp` |
+| **Comentario JSP** | `<%-- ... --%>` | Comentario que **no** llega al navegador (a diferencia de `<!-- -->`) | Todas las JSP |
+| **Objetos implícitos** | `request`, `response` | Disponibles en toda JSP sin declararlos | `request.getAttribute(...)`, `request.getContextPath()` |
+
+### Detalles de seguridad y buenas prácticas
+
+- 🔒 Las JSP están dentro de **`WEB-INF/vistas/`**. El navegador no puede abrirlas directamente: siempre pasan por un servlet, que es el que les entrega los datos.
+- 🛡️ Todo texto escrito por el usuario se imprime con **`HtmlUtil.escapar(...)`**. Si alguien escribe `<script>` en el concepto, se muestra como texto y no se ejecuta (protección contra **XSS**).
+- 💉 Los DAO siguen usando **`PreparedStatement`**, así que los datos del formulario no pueden alterar el SQL (protección contra **inyección SQL**).
+- ✅ Los datos se validan **dos veces**: en el navegador (`required`, `type="email"`, `min="0"`) y en el servlet, porque la validación del navegador se puede saltar.
+- 🔤 `request.setCharacterEncoding("UTF-8")` y `<page-encoding>UTF-8</page-encoding>` en `web.xml` hacen que las tildes y la **ñ** se guarden y se muestren bien.
+
+> [!NOTE]
+> **Diferencia con el proyecto de NetBeans de Amalfi:** su versión usa `javax.servlet` con Tomcat 7. Este proyecto usa **`jakarta.servlet`** (Jakarta EE 10) con Jetty 12, porque Tomcat 7 no es compatible con los JDK actuales. El código de los servlets es el mismo: solo cambian los `import`. El `.war` generado (`target/finanzafamiliar.war`) también funciona en **Tomcat 10.1 o superior**.
+
+---
+
 ## 🗂️ Estructura del proyecto
 
 ```text
-FinanzaFamiliar/
-├── 📄 pom.xml                         ← Configuración de Maven (Java 17 + driver MySQL)
+FinanzaFamiliarBackend/
+├── 📄 pom.xml                         ← Configuración de Maven (war, Java 17, Servlet/JSP, driver MySQL, Jetty)
 ├── 📄 README.md                       ← Este archivo
 ├── 📄 .gitignore
 ├── 📁 sql/
 │   ├── finanzafamiliar_movimientos.sql   ← 1️⃣ Base de datos, tablas y datos iniciales
 │   └── crear_usuario_bd.sql              ← 2️⃣ Usuario de MySQL para la aplicación
-└── 📁 src/main/java/com/finanzafamiliar/contabilidad/
-    ├── 📁 app/
-    │   └── Main.java                  ← Punto de entrada: prueba el CRUD de ambos módulos
-    ├── 📁 conexion/
-    │   └── ConexionBD.java            ← Abre y cierra la conexión JDBC
-    ├── 📁 modelo/
-    │   ├── Usuario.java               ← POJO de la tabla usuario
-    │   └── Movimiento.java            ← POJO de la tabla movimiento
-    └── 📁 dao/
-        ├── UsuarioDAO.java            ← CRUD de usuarios
-        └── MovimientoDAO.java         ← CRUD de movimientos
+└── 📁 src/main/
+    ├── 📁 java/com/finanzafamiliar/contabilidad/
+    │   ├── 📁 app/
+    │   │   └── Main.java                     ← Prueba de consola del CRUD de ambos módulos
+    │   ├── 📁 conexion/
+    │   │   └── ConexionBD.java               ← Abre y cierra la conexión JDBC
+    │   ├── 📁 modelo/
+    │   │   ├── Usuario.java                  ← POJO de la tabla usuario
+    │   │   ├── Movimiento.java               ← POJO de la tabla movimiento
+    │   │   └── Categoria.java                ← POJO de la tabla categoria
+    │   ├── 📁 dao/
+    │   │   ├── UsuarioDAO.java               ← CRUD de usuarios + búsqueda por nombre
+    │   │   ├── MovimientoDAO.java            ← CRUD de movimientos + filtro por tipo
+    │   │   └── CategoriaDAO.java             ← Consulta de categorías para el formulario
+    │   └── 📁 web/
+    │       ├── ListarUsuariosServlet.java       ← GET  /usuarios
+    │       ├── RegistrarUsuarioServlet.java     ← GET y POST /usuarios/registrar
+    │       ├── ListarMovimientosServlet.java    ← GET  /movimientos
+    │       ├── RegistrarMovimientoServlet.java  ← GET y POST /movimientos/registrar
+    │       └── HtmlUtil.java                    ← Escapa textos para evitar XSS
+    └── 📁 webapp/
+        ├── index.jsp                         ← Página de inicio
+        ├── 📁 css/
+        │   └── estilos.css
+        └── 📁 WEB-INF/                       ← Carpeta protegida: el navegador no la puede abrir
+            ├── web.xml                       ← Descriptor de despliegue
+            └── 📁 vistas/
+                ├── 📁 fragmentos/
+                │   ├── encabezado.jsp        ← Encabezado y menú (<jsp:include>)
+                │   └── pie.jspf              ← Pie de página (<%@ include %>)
+                ├── 📁 usuarios/
+                │   ├── listar.jsp
+                │   └── registrar.jsp
+                └── 📁 movimientos/
+                    ├── listar.jsp
+                    └── registrar.jsp
 ```
 
 ### ¿Cómo se comunican las capas?
 
 ```mermaid
 flowchart LR
-    A["🚀 Main<br/><small>app</small>"] --> B["📦 UsuarioDAO<br/>MovimientoDAO<br/><small>dao</small>"]
+    N["🧑 Navegador"] -->|GET / POST| W["⚙️ Servlets<br/><small>web</small>"]
+    W -->|forward| V["📄 JSP<br/><small>WEB-INF/vistas</small>"]
+    V -->|HTML| N
+    A["🚀 Main<br/><small>app</small>"] --> B
+    W --> B["📦 UsuarioDAO<br/>MovimientoDAO<br/>CategoriaDAO<br/><small>dao</small>"]
     B --> C["🔌 ConexionBD<br/><small>conexion</small>"]
     C -->|JDBC| D[("🐬 MySQL<br/>finanzafamiliar")]
-    B -. "crea y devuelve" .-> E["🧩 Usuario<br/>Movimiento<br/><small>modelo</small>"]
+    B -. "crea y devuelve" .-> E["🧩 Usuario<br/>Movimiento<br/>Categoria<br/><small>modelo</small>"]
 ```
 
-| Paquete | Responsabilidad |
+| Paquete / carpeta | Responsabilidad |
 |:--|:--|
-| `app` | Ejecuta el programa y muestra los resultados en consola |
+| `app` | Ejecuta la prueba de consola y muestra los resultados |
+| `web` | **Controladores**: servlets que reciben las peticiones GET y POST, validan y eligen qué vista mostrar |
+| `webapp/WEB-INF/vistas` | **Vistas**: páginas JSP que generan el HTML |
 | `dao` | *Data Access Object*: contiene el SQL de cada tabla (insertar, consultar, actualizar, eliminar) |
 | `conexion` | Centraliza los datos de conexión y entrega objetos `Connection` |
 | `modelo` | Clases simples (POJO) que representan una fila de cada tabla |
@@ -390,6 +575,12 @@ erDiagram
 | `No se encontro el driver JDBC de MySQL` | Maven no descargó las dependencias | IntelliJ: panel Maven → 🔄 Reload. NetBeans: clic derecho → **Build with Dependencies**. Verifica tu conexión a internet |
 | `package com.mysql... does not exist` / clases en rojo | Las dependencias no se han cargado | Igual que el caso anterior |
 | `invalid target release: 17` | El JDK instalado es anterior a la versión 17 | Instala JDK 17 o superior y selecciónalo en el IDE |
+| `The XML schema [XMLSchema.dtd] could not be found` *(al iniciar Jetty)* | Es solo una **advertencia** de Jetty 12.0 al leer `web.xml` | Ignórala. Si más abajo aparece `Started ServerConnector ... 8081`, el servidor está funcionando |
+| `Failed to bind to 0.0.0.0/0.0.0.0:8081` / `Address already in use` | Ya hay otro servidor usando el puerto 8081 (por ejemplo, un `jetty:run` anterior) | Detén el anterior con ⏹ y vuelve a ejecutar |
+| `No plugin found for prefix 'jetty'` | Maven no ha cargado el `pom.xml` actualizado | Panel Maven → 🔄 Reload |
+| La página dice **HTTP ERROR 404** | La URL está mal escrita | Usa las URL de la tabla [Páginas disponibles](#páginas-disponibles) |
+| La página muestra un mensaje rojo con `Access denied` o `Communications link failure` | MySQL está apagado o falta el usuario `finanza_user` | Revisa el [Paso 2](#-paso-2--crear-la-base-de-datos-en-mysql-workbench) |
+| Las tildes o la ñ se ven como `Ã±` | El archivo JSP no se guardó en UTF-8 | En el IDE, cambia la codificación del archivo a **UTF-8** |
 
 ---
 
@@ -411,9 +602,18 @@ El código sigue el documento de estándares del proyecto (evidencia `GA7-220501
 
 ## 🌿 Trabajo en equipo con Git
 
-Antes de empezar a trabajar, trae siempre los últimos cambios de tu compañera o compañero:
+Cada integrante trabaja en **su propia rama** y la rama `main` solo se actualiza por medio de **Pull Requests** en GitHub:
+
+| Rama | ¿De quién? |
+|:--|:--|
+| `main` | Versión estable y revisada |
+| `dev-cristhian` | Trabajo de Cristhian |
+| `dev-amalfi` | Trabajo de Amalfi |
+
+Antes de empezar a trabajar, cámbiate a tu rama y trae los últimos cambios de `main`:
 
 ```bash
+git switch dev-tu-nombre
 git pull origin main
 ```
 
@@ -422,8 +622,10 @@ Después de terminar un avance:
 ```bash
 git add .
 git commit -m "Descripción corta y clara del cambio"
-git push origin main
+git push origin dev-tu-nombre
 ```
+
+Luego, en GitHub, abre un **Pull Request** de `dev-tu-nombre` hacia `main` y haz el **merge**.
 
 > 💡 Haz **commits pequeños**: uno por funcionalidad, por ejemplo *"Agregar UsuarioDAO"* o *"Corregir consulta de movimientos"*. Así es más fácil revisar el historial y deshacer un cambio si algo falla.
 

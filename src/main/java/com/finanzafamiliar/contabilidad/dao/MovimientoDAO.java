@@ -72,6 +72,31 @@ public class MovimientoDAO {
     }
 
     /**
+     * READ - Consulta los movimientos filtrados por tipo (ingreso o gasto).
+     *
+     * Se agrega en la evidencia GA7-220501096-AA2-EV02 para atender el
+     * filtro por parametro GET ("tipo") del modulo web de listado de
+     * movimientos (ListarMovimientosServlet).
+     */
+    public List<Movimiento> consultarPorTipo(String tipo) throws SQLException {
+        String sql = "SELECT id_movimiento, tipo, monto, concepto, fecha, id_categoria, id_usuario "
+                + "FROM movimiento WHERE tipo = ? ORDER BY fecha DESC, id_movimiento DESC";
+        List<Movimiento> movimientos = new ArrayList<>();
+
+        try (Connection conexion = ConexionBD.obtenerConexion();
+             PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+
+            sentencia.setString(1, tipo);
+            try (ResultSet resultado = sentencia.executeQuery()) {
+                while (resultado.next()) {
+                    movimientos.add(mapearMovimiento(resultado));
+                }
+            }
+        }
+        return movimientos;
+    }
+
+    /**
      * READ - Consulta un movimiento especifico por su identificador.
      */
     public Movimiento consultarPorId(int idMovimiento) throws SQLException {
