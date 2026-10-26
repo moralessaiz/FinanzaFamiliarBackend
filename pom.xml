@@ -1,84 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Proyecto padre de Spring Boot: define las versiones compatibles de todas
+        las librerias (Spring, Jackson, driver de MySQL, JUnit...), por eso las
+        dependencias de abajo no llevan <version>.
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.16</version>
+        <relativePath/>
+    </parent>
 
     <!-- Identificacion del proyecto -->
     <groupId>com.finanzafamiliar</groupId>
     <artifactId>finanzafamiliar-backend</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <!-- war = aplicacion web (Servlets + JSP) que se despliega en un servidor -->
-    <packaging>war</packaging>
+    <version>2.0.0</version>
+    <!-- jar = aplicacion Spring Boot con servidor Tomcat embebido (ya no es un war) -->
+    <packaging>jar</packaging>
 
     <name>FinanzaFamiliar Backend</name>
-    <description>Sistema de Contabilidad Familiar - modulos web de usuarios y movimientos con Servlets, JSP, JDBC y MySQL</description>
+    <description>API REST del Sistema de Contabilidad Familiar - modulos de usuarios y movimientos con Spring Boot, JDBC y MySQL</description>
 
     <properties>
-        <!-- Version de Java del proyecto (igual a la usada en NetBeans) -->
-        <maven.compiler.release>17</maven.compiler.release>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Prueba de consola del CRUD (evidencia EV01): "mvn compile exec:java" -->
-        <exec.mainClass>com.finanzafamiliar.contabilidad.app.Main</exec.mainClass>
+        <!-- Version de Java del proyecto -->
+        <java.version>17</java.version>
     </properties>
 
     <dependencies>
-        <!-- API de Servlets (Jakarta EE 10). "provided": la aporta el servidor (Jetty o Tomcat 10.1+) -->
+        <!-- API REST: controladores @RestController, conversion a JSON (Jackson) y Tomcat embebido -->
         <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-            <version>6.0.0</version>
-            <scope>provided</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- API de JSP. Tambien la aporta el servidor; aqui solo sirve para que el IDE reconozca los JSP -->
+        <!-- Acceso a datos con JDBC: JdbcTemplate y pool de conexiones HikariCP -->
         <dependency>
-            <groupId>jakarta.servlet.jsp</groupId>
-            <artifactId>jakarta.servlet.jsp-api</artifactId>
-            <version>3.1.1</version>
-            <scope>provided</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
 
-        <!-- Driver JDBC de MySQL (reemplaza el .jar de la carpeta lib/) -->
+        <!-- Validacion de los datos recibidos con anotaciones (@NotBlank, @Email, @Size...) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Driver JDBC de MySQL (el mismo de la version con Servlets) -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>26.7.0</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Pruebas unitarias: JUnit 5, Mockito y MockMvc -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
-        <!-- Nombre del archivo generado: target/finanzafamiliar.war -->
-        <finalName>finanzafamiliar</finalName>
+        <!-- Nombre del archivo generado: target/finanzafamiliar-backend.jar -->
+        <finalName>finanzafamiliar-backend</finalName>
         <plugins>
+            <!-- Permite ejecutar la API con "mvnw spring-boot:run" y empaquetarla como jar ejecutable -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.4.0</version>
-            </plugin>
-            <!--
-                Servidor Jetty embebido: ejecuta la aplicacion web con "mvn jetty:run"
-                sin instalar Tomcat. Puerto 8081, igual que el modulo de Amalfi.
-                Abrir http://localhost:8081/
-            -->
-            <plugin>
-                <groupId>org.eclipse.jetty.ee10</groupId>
-                <artifactId>jetty-ee10-maven-plugin</artifactId>
-                <version>12.0.16</version>
-                <configuration>
-                    <httpConnector>
-                        <port>8081</port>
-                    </httpConnector>
-                    <webApp>
-                        <contextPath>/</contextPath>
-                    </webApp>
-                </configuration>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
