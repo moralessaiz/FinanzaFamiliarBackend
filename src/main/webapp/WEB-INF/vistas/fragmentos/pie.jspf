@@ -1,9 +1,0 @@
-<%--
-    Fragmento estatico: pie de pagina. Se incluye con la directiva
-    <%@ include file="..." %>, que copia este texto dentro del JSP
-    antes de compilarlo (a diferencia de <jsp:include>, que se ejecuta
-    en cada peticion).
---%>
-<footer>
-    <p>FinanzaFamiliar &ndash; Sistema de Contabilidad Familiar | Evidencia GA7-220501096-AA2-EV02</p>
-</footer>
