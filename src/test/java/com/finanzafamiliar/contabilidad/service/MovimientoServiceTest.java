@@ -111,10 +111,25 @@ class MovimientoServiceTest {
     @Test
     @DisplayName("Eliminar un movimiento que no existe lanza 404")
     void eliminarInexistente() {
-        when(movimientoRepository.eliminar(77L)).thenReturn(false);
+        when(movimientoRepository.consultarPorId(77L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> movimientoService.eliminarMovimiento(77L))
                 .isInstanceOf(RecursoNoEncontradoException.class);
+        verify(movimientoRepository, never()).eliminar(77L);
+    }
+
+    @Test
+    @DisplayName("Eliminar un movimiento existente lo borra y devuelve sus datos")
+    void eliminarExistente() {
+        Movimiento existente = crearMovimiento("gasto", 3L);
+        existente.setIdMovimiento(12L);
+        when(movimientoRepository.consultarPorId(12L)).thenReturn(Optional.of(existente));
+        when(movimientoRepository.eliminar(12L)).thenReturn(true);
+
+        Movimiento eliminado = movimientoService.eliminarMovimiento(12L);
+
+        assertThat(eliminado.getIdMovimiento()).isEqualTo(12L);
+        verify(movimientoRepository).eliminar(12L);
     }
 
     private Movimiento crearMovimiento(String tipo, Long idCategoria) {

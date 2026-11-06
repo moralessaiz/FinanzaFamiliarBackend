@@ -100,11 +100,15 @@ public class MovimientoService {
      * Elimina un movimiento.
      *
      * @throws RecursoNoEncontradoException si el movimiento no existe (404).
+     * @return los datos que tenia el movimiento eliminado.
      */
-    public void eliminarMovimiento(Long idMovimiento) {
+    public Movimiento eliminarMovimiento(Long idMovimiento) {
+        // Se consulta antes de borrar para poder devolver sus datos en la respuesta
+        Movimiento movimiento = buscarPorId(idMovimiento);
         if (!movimientoRepository.eliminar(idMovimiento)) {
             throw new RecursoNoEncontradoException("No se encontró el movimiento con id " + idMovimiento);
         }
+        return movimiento;
     }
 
     /**

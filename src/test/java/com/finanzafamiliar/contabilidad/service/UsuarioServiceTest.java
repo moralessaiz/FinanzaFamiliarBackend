@@ -93,6 +93,19 @@ class UsuarioServiceTest {
     }
 
     @Test
+    @DisplayName("Eliminar un usuario sin movimientos lo borra y devuelve sus datos")
+    void eliminarUsuarioSinMovimientos() {
+        when(usuarioRepository.consultarPorId(5L)).thenReturn(Optional.of(
+                new Usuario(5L, "Laura Morales", "laura@correo.com", "Integrante")));
+        when(movimientoRepository.contarPorUsuario(5L)).thenReturn(0);
+
+        Usuario eliminado = usuarioService.eliminarUsuario(5L);
+
+        assertThat(eliminado.getNombre()).isEqualTo("Laura Morales");
+        verify(usuarioRepository).eliminar(5L);
+    }
+
+    @Test
     @DisplayName("Eliminar un usuario que no existe lanza 404")
     void eliminarUsuarioInexistente() {
         when(usuarioRepository.consultarPorId(50L)).thenReturn(Optional.empty());

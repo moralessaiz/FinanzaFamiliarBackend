@@ -209,6 +209,25 @@ curl -X POST http://localhost:8080/api/usuarios \
      -d '{"nombre": "Laura Morales", "correo": "laura@correo.com", "rol": "Integrante"}'
 ```
 
+### 📮 Pruebas con Postman
+
+La carpeta [`postman/`](postman/) trae la colección **`FinanzaFamiliar-API.postman_collection.json`**, con **26 peticiones** y **59 pruebas automáticas** que cubren todos los endpoints:
+
+| Carpeta | Qué prueba |
+|:--|:--|
+| 01 Categorías | Listado de categorías |
+| 02 Usuarios | Listar, buscar, crear, consultar, actualizar, correo repetido (409), datos inválidos (400), id inexistente (404) |
+| 03 Movimientos | Listar, filtrar, resumen, crear, consultar, actualizar, categoría de otro tipo (400), datos inválidos (400), id inexistente (404) |
+| 04 Eliminación y reglas entre módulos | Usuario con movimientos (409), eliminar movimiento y usuario (200 con mensaje de confirmación), ruta inexistente (404) |
+
+1. Enciende MySQL y la API ([Paso 3](#️-paso-3--ejecutar-la-api)).
+2. En Postman: **Import** → arrastra el archivo de la colección.
+3. Clic derecho sobre **FinanzaFamiliar API REST** → **Run collection** → **Run FinanzaFamiliar API REST**.
+
+La colección crea un usuario y un movimiento de prueba, guarda sus id en variables (`{{idUsuario}}`, `{{idMovimiento}}`) para usarlos en las peticiones siguientes, y al final los elimina. Así la base de datos queda igual y se puede ejecutar las veces que se quiera.
+
+> 💡 También se puede ejecutar desde la terminal, sin abrir Postman: `npx newman run postman/FinanzaFamiliar-API.postman_collection.json`
+
 ---
 
 ## 🔌 Servicios de la API
@@ -223,7 +242,7 @@ Dirección base: **`http://localhost:8080/api`**
 | `GET` | `/usuarios/{id}` | Consulta un usuario | `200` | `404` no existe |
 | `POST` | `/usuarios` | Registra un usuario | `201` | `400` datos inválidos · `409` correo repetido |
 | `PUT` | `/usuarios/{id}` | Actualiza un usuario | `200` | `400` · `404` · `409` |
-| `DELETE` | `/usuarios/{id}` | Elimina un usuario | `204` | `404` · `409` tiene movimientos |
+| `DELETE` | `/usuarios/{id}` | Elimina un usuario y devuelve un mensaje de confirmación | `200` | `404` · `409` tiene movimientos |
 
 ```json
 { "nombre": "Laura Morales", "correo": "laura@correo.com", "rol": "Integrante" }
@@ -238,7 +257,7 @@ Dirección base: **`http://localhost:8080/api`**
 | `GET` | `/movimientos/{id}` | Consulta un movimiento | `200` | `404` |
 | `POST` | `/movimientos` | Registra un movimiento | `201` | `400` datos inválidos o regla incumplida |
 | `PUT` | `/movimientos/{id}` | Actualiza un movimiento | `200` | `400` · `404` |
-| `DELETE` | `/movimientos/{id}` | Elimina un movimiento | `204` | `404` |
+| `DELETE` | `/movimientos/{id}` | Elimina un movimiento y devuelve un mensaje de confirmación | `200` | `404` |
 
 ```json
 {
@@ -252,6 +271,24 @@ Dirección base: **`http://localhost:8080/api`**
 ```
 
 Al consultar, cada movimiento trae además `idMovimiento`, `nombreCategoria` y `nombreUsuario`.
+
+### 🗑️ Respuesta de los `DELETE`
+
+Al eliminar un usuario o un movimiento, la API responde `200` con un mensaje de confirmación y los datos que tenía el registro:
+
+```json
+{
+  "mensaje": "Se eliminó el usuario Laura Morales (id 8)",
+  "eliminado": {
+    "idUsuario": 8,
+    "nombre": "Laura Morales",
+    "correo": "laura@correo.com",
+    "rol": "Integrante"
+  }
+}
+```
+
+El campo `mensaje` es el mismo de las respuestas de error, así el front-end y Postman leen siempre el mismo formato.
 
 ### 🏷️ Categorías — `CategoriaController`
 
@@ -275,9 +312,8 @@ Todos los errores tienen la misma forma, para que el front-end los pueda mostrar
 
 | Código | Significado | Cuándo pasa |
 |:--:|:--|:--|
-| `200` OK | Todo bien | Consultar o actualizar |
+| `200` OK | Todo bien | Consultar, actualizar o eliminar |
 | `201` Created | Se creó el registro | `POST` correcto |
-| `204` No Content | Se eliminó, no hay nada que devolver | `DELETE` correcto |
 | `400` Bad Request | Los datos enviados no son válidos | Campos vacíos, formatos incorrectos, categoría de otro tipo |
 | `404` Not Found | No existe | Id inexistente o ruta mal escrita |
 | `409` Conflict | Choca con datos existentes | Correo repetido, eliminar un usuario con movimientos |
@@ -409,7 +445,7 @@ Así se transformó cada pieza de la versión anterior (`aa2-servlets-jsp`):
 
 ## 🧪 Pruebas unitarias
 
-El proyecto tiene **32 pruebas** con JUnit 5, Mockito y MockMvc. **No necesitan MySQL**: los repositorios y servicios se reemplazan por simulacros (mocks).
+El proyecto tiene **35 pruebas** con JUnit 5, Mockito y MockMvc. **No necesitan MySQL**: los repositorios y servicios se reemplazan por simulacros (mocks).
 
 ```powershell
 .\mvnw.cmd test        # Windows
@@ -420,15 +456,15 @@ En IntelliJ: clic derecho sobre la carpeta `src/test/java` → **Run 'All Tests'
 
 | Clase de prueba | Qué comprueba |
 |:--|:--|
-| `UsuarioControllerTest` (9) | Respuestas `200/201/204`, campos vacíos, nombre con números o `<script>`, correo inválido, rol desconocido, nombre de más de 80 caracteres, id no numérico, `404` y `409` |
-| `MovimientoControllerTest` (11) | Monto negativo, con 3 decimales o con texto, tipo desconocido, fecha futura o inexistente (`2026-02-31`), concepto de más de 150 caracteres, JSON mal escrito, resumen y ruta inexistente |
-| `UsuarioServiceTest` (6) | Normalización del nombre y el correo, correo repetido, editar sin chocar consigo mismo, no eliminar con movimientos |
-| `MovimientoServiceTest` (6) | Categoría de otro tipo, categoría o usuario inexistente, filtro por tipo, eliminar inexistente |
+| `UsuarioControllerTest` (9) | Respuestas `200/201`, mensaje del `DELETE`, campos vacíos, nombre con números o `<script>`, correo inválido, rol desconocido, nombre de más de 80 caracteres, id no numérico, `404` y `409` |
+| `MovimientoControllerTest` (12) | Mensaje del `DELETE`, monto negativo, con 3 decimales o con texto, tipo desconocido, fecha futura o inexistente (`2026-02-31`), concepto de más de 150 caracteres, JSON mal escrito, resumen y ruta inexistente |
+| `UsuarioServiceTest` (7) | Normalización del nombre y el correo, correo repetido, editar sin chocar consigo mismo, eliminar sin movimientos, no eliminar con movimientos |
+| `MovimientoServiceTest` (7) | Categoría de otro tipo, categoría o usuario inexistente, filtro por tipo, eliminar existente e inexistente |
 
 Resultado esperado:
 
 ```text
-Tests run: 32, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 35, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 

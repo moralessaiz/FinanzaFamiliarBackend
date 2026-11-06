@@ -1,0 +1,1051 @@
+{
+  "info": {
+    "_postman_id": "f9792330-07b4-58b9-9cbb-2b2eba26dce0",
+    "name": "FinanzaFamiliar API REST",
+    "description": "Pruebas de la API REST del Sistema de Contabilidad Familiar - FinanzaFamiliar (Spring Boot + JDBC + MySQL).\n\nEvidencia GA7-220501096-AA5-EV02.\n\nAntes de ejecutar: encender MySQL y la API (http://localhost:8080).\nLa colección se ejecuta en orden (Run collection): crea un usuario y un movimiento de prueba, los consulta, actualiza y elimina, y al final la base de datos queda igual.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Categorías",
+      "description": "Catálogo de categorías de ingreso y gasto (solo lectura).",
+      "item": [
+        {
+          "name": "GET Listar categorías",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde un arreglo con las 4 categorías iniciales\", () => {",
+                  "    const categorias = pm.response.json();",
+                  "    pm.expect(categorias).to.be.an(\"array\");",
+                  "    pm.expect(categorias.length).to.be.at.least(4);",
+                  "});",
+                  "pm.test(\"Cada categoría tiene id, nombre y tipo\", () => {",
+                  "    pm.response.json().forEach(c => pm.expect(c).to.have.all.keys(\"idCategoria\", \"nombre\", \"tipo\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            },
+            "description": "Lista todas las categorías. El front-end las usa para llenar la lista del formulario de movimientos."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Usuarios",
+      "description": "CRUD del módulo de usuarios (integrantes del grupo familiar) y validaciones.",
+      "item": [
+        {
+          "name": "GET Listar usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde un arreglo de usuarios\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "pm.test(\"Tiempo de respuesta menor a 2 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET Buscar usuarios por nombre",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Todos los resultados contienen 'cris' en el nombre\", () => {",
+                  "    pm.response.json().forEach(u => pm.expect(u.nombre.toLowerCase()).to.include(\"cris\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios?nombre=cris",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "nombre",
+                  "value": "cris"
+                }
+              ]
+            },
+            "description": "Filtro opcional por parámetro de consulta ?nombre=texto."
+          }
+        },
+        {
+          "name": "POST Crear usuario",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Correo único en cada ejecución, para que la prueba se pueda repetir sin error 409",
+                  "pm.collectionVariables.set(\"correoPrueba\", \"laura.postman.\" + Date.now() + \"@finanzafamiliar.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 201 Created\", () => pm.response.to.have.status(201));",
+                  "const usuario = pm.response.json();",
+                  "pm.test(\"La API asignó un idUsuario\", () => pm.expect(usuario.idUsuario).to.be.a(\"number\"));",
+                  "pm.test(\"Los datos guardados coinciden con los enviados\", () => {",
+                  "    pm.expect(usuario.nombre).to.eql(\"Laura Prueba Postman\");",
+                  "    pm.expect(usuario.correo).to.eql(pm.collectionVariables.get(\"correoPrueba\"));",
+                  "    pm.expect(usuario.rol).to.eql(\"Integrante\");",
+                  "});",
+                  "// Se guarda el id para usarlo en las siguientes peticiones",
+                  "pm.collectionVariables.set(\"idUsuario\", usuario.idUsuario);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Registra un usuario. Guarda el id generado en la variable {{idUsuario}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura Prueba Postman\",\n  \"correo\": \"{{correoPrueba}}\",\n  \"rol\": \"Integrante\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET Consultar usuario por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devuelve el usuario recién creado\", () => {",
+                  "    pm.expect(pm.response.json().idUsuario).to.eql(Number(pm.collectionVariables.get(\"idUsuario\")));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{idUsuario}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "PUT Actualizar usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"El rol y el nombre quedaron actualizados\", () => {",
+                  "    const usuario = pm.response.json();",
+                  "    pm.expect(usuario.rol).to.eql(\"Administrador\");",
+                  "    pm.expect(usuario.nombre).to.eql(\"Laura Postman Actualizada\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{idUsuario}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura Postman Actualizada\",\n  \"correo\": \"{{correoPrueba}}\",\n  \"rol\": \"Administrador\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST Crear usuario con correo repetido (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Explica que el correo ya existe\", () => {",
+                  "    pm.expect(pm.response.json().mensaje).to.include(\"Ya existe un usuario registrado con el correo\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Regla de negocio: el correo no se puede repetir.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Otra Persona\",\n  \"correo\": \"{{correoPrueba}}\",\n  \"rol\": \"Integrante\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST Crear usuario con datos inválidos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const cuerpo = pm.response.json();",
+                  "pm.test(\"Mensaje general 'Datos inválidos'\", () => pm.expect(cuerpo.mensaje).to.eql(\"Datos inválidos\"));",
+                  "pm.test(\"Indica el error de cada campo\", () => {",
+                  "    pm.expect(cuerpo.errores).to.have.property(\"nombre\");",
+                  "    pm.expect(cuerpo.errores).to.have.property(\"correo\");",
+                  "    pm.expect(cuerpo.errores).to.have.property(\"rol\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Validaciones: el nombre solo admite letras, el correo debe ser válido y el rol debe ser Administrador o Integrante.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laura 123\",\n  \"correo\": \"correo-sin-arroba\",\n  \"rol\": \"Jefe\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET Usuario inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mensaje de usuario no encontrado\", () => pm.expect(pm.response.json().mensaje).to.include(\"999999\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "999999"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET Usuario con id no numérico (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Indica que el parámetro id no es válido\", () => pm.expect(pm.response.json().mensaje).to.include(\"id\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "abc"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Movimientos",
+      "description": "CRUD del módulo de movimientos (ingresos y gastos), resumen y reglas de negocio.",
+      "item": [
+        {
+          "name": "GET Listar movimientos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde un arreglo de movimientos\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET Filtrar movimientos por tipo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Todos los movimientos son gastos\", () => {",
+                  "    pm.response.json().forEach(m => pm.expect(m.tipo).to.eql(\"gasto\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos?tipo=gasto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "gasto"
+                }
+              ]
+            },
+            "description": "Valores permitidos para ?tipo=: ingreso, gasto o todos."
+          }
+        },
+        {
+          "name": "GET Filtro de tipo inválido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Explica los valores permitidos\", () => {",
+                  "    pm.expect(pm.response.json().mensaje).to.eql(\"El filtro tipo debe ser ingreso, gasto o todos\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos?tipo=otro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "otro"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET Resumen de ingresos, gastos y saldo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "const resumen = pm.response.json();",
+                  "pm.test(\"Incluye los cuatro totales\", () => {",
+                  "    pm.expect(resumen).to.have.all.keys(\"totalIngresos\", \"totalGastos\", \"saldo\", \"cantidadMovimientos\");",
+                  "});",
+                  "pm.test(\"El saldo es igual a ingresos menos gastos\", () => {",
+                  "    pm.expect(Number(resumen.saldo)).to.be.closeTo(Number(resumen.totalIngresos) - Number(resumen.totalGastos), 0.001);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos/resumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos",
+                "resumen"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "POST Crear movimiento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 201 Created\", () => pm.response.to.have.status(201));",
+                  "const movimiento = pm.response.json();",
+                  "pm.test(\"La API asignó un idMovimiento\", () => pm.expect(movimiento.idMovimiento).to.be.a(\"number\"));",
+                  "pm.test(\"Los datos guardados coinciden con los enviados\", () => {",
+                  "    pm.expect(movimiento.tipo).to.eql(\"gasto\");",
+                  "    pm.expect(Number(movimiento.monto)).to.eql(450000);",
+                  "    pm.expect(movimiento.idUsuario).to.eql(Number(pm.collectionVariables.get(\"idUsuario\")));",
+                  "});",
+                  "pm.collectionVariables.set(\"idMovimiento\", movimiento.idMovimiento);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Registra un gasto de la categoría 3 (Mercado) para el usuario creado en la carpeta 02. Guarda el id en {{idMovimiento}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"gasto\",\n  \"monto\": 450000.0,\n  \"concepto\": \"Mercado del mes (prueba Postman)\",\n  \"fecha\": \"2026-11-01\",\n  \"idCategoria\": 3,\n  \"idUsuario\": {{idUsuario}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET Consultar movimiento por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "const movimiento = pm.response.json();",
+                  "pm.test(\"Devuelve el movimiento recién creado\", () => {",
+                  "    pm.expect(movimiento.idMovimiento).to.eql(Number(pm.collectionVariables.get(\"idMovimiento\")));",
+                  "});",
+                  "pm.test(\"Incluye los nombres de la categoría y del usuario\", () => {",
+                  "    pm.expect(movimiento.nombreCategoria).to.eql(\"Mercado\");",
+                  "    pm.expect(movimiento.nombreUsuario).to.eql(\"Laura Postman Actualizada\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos/{{idMovimiento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos",
+                "{{idMovimiento}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "PUT Actualizar movimiento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"El monto y el concepto quedaron actualizados\", () => {",
+                  "    const movimiento = pm.response.json();",
+                  "    pm.expect(Number(movimiento.monto)).to.eql(470000);",
+                  "    pm.expect(movimiento.concepto).to.eql(\"Mercado del mes ajustado (prueba Postman)\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos/{{idMovimiento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos",
+                "{{idMovimiento}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"gasto\",\n  \"monto\": 470000.0,\n  \"concepto\": \"Mercado del mes ajustado (prueba Postman)\",\n  \"fecha\": \"2026-11-01\",\n  \"idCategoria\": 3,\n  \"idUsuario\": {{idUsuario}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST Categoría de otro tipo (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Explica que la categoría no corresponde al tipo\", () => {",
+                  "    pm.expect(pm.response.json().mensaje).to.include(\"no se puede usar en un ingreso\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Regla de negocio: un ingreso no puede usar una categoría de gasto (Mercado).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"ingreso\",\n  \"monto\": 100000,\n  \"concepto\": \"Ingreso con categoría de gasto\",\n  \"fecha\": \"2026-11-01\",\n  \"idCategoria\": 3,\n  \"idUsuario\": {{idUsuario}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST Movimiento con datos inválidos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const cuerpo = pm.response.json();",
+                  "pm.test(\"Indica el error de cada campo\", () => {",
+                  "    pm.expect(cuerpo.errores.tipo).to.eql(\"El tipo debe ser ingreso o gasto\");",
+                  "    pm.expect(cuerpo.errores.monto).to.eql(\"El monto debe ser mayor que cero\");",
+                  "    pm.expect(cuerpo.errores.fecha).to.eql(\"La fecha no puede ser posterior a hoy\");",
+                  "    pm.expect(cuerpo.errores).to.have.property(\"concepto\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"prestamo\",\n  \"monto\": -5000,\n  \"concepto\": \"\",\n  \"fecha\": \"2099-12-31\",\n  \"idCategoria\": 3,\n  \"idUsuario\": {{idUsuario}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET Movimiento inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mensaje de movimiento no encontrado\", () => {",
+                  "    pm.expect(pm.response.json().mensaje).to.eql(\"No se encontró el movimiento con id 999999\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos",
+                "999999"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Eliminación y reglas entre módulos",
+      "description": "Prueba DELETE y deja la base de datos como estaba antes de ejecutar la colección.",
+      "item": [
+        {
+          "name": "DELETE Usuario con movimientos (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Explica que el usuario tiene movimientos\", () => {",
+                  "    pm.expect(pm.response.json().mensaje).to.include(\"porque tiene\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{idUsuario}}"
+              ]
+            },
+            "description": "Regla de negocio: no se puede eliminar un usuario que tiene movimientos registrados."
+          }
+        },
+        {
+          "name": "DELETE Eliminar movimiento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "const respuesta = pm.response.json();",
+                  "pm.test(\"Confirma la eliminación con un mensaje\", () => {",
+                  "    pm.expect(respuesta.mensaje).to.eql(\"Se eliminó el movimiento \\\"Mercado del mes ajustado (prueba Postman)\\\" (id \"",
+                  "        + pm.collectionVariables.get(\"idMovimiento\") + \")\");",
+                  "});",
+                  "pm.test(\"Devuelve los datos del movimiento eliminado\", () => {",
+                  "    pm.expect(respuesta.eliminado.idMovimiento).to.eql(Number(pm.collectionVariables.get(\"idMovimiento\")));",
+                  "    pm.expect(Number(respuesta.eliminado.monto)).to.eql(470000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos/{{idMovimiento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos",
+                "{{idMovimiento}}"
+              ]
+            },
+            "description": "Elimina el movimiento y responde 200 con un mensaje de confirmación y los datos que tenía."
+          }
+        },
+        {
+          "name": "GET Movimiento eliminado (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404: el movimiento ya no existe\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movimientos/{{idMovimiento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movimientos",
+                "{{idMovimiento}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "DELETE Eliminar usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 OK\", () => pm.response.to.have.status(200));",
+                  "const respuesta = pm.response.json();",
+                  "pm.test(\"Confirma la eliminación con un mensaje\", () => {",
+                  "    pm.expect(respuesta.mensaje).to.eql(\"Se eliminó el usuario Laura Postman Actualizada (id \"",
+                  "        + pm.collectionVariables.get(\"idUsuario\") + \")\");",
+                  "});",
+                  "pm.test(\"Devuelve los datos del usuario eliminado\", () => {",
+                  "    pm.expect(respuesta.eliminado.idUsuario).to.eql(Number(pm.collectionVariables.get(\"idUsuario\")));",
+                  "    pm.expect(respuesta.eliminado.correo).to.eql(pm.collectionVariables.get(\"correoPrueba\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{idUsuario}}"
+              ]
+            },
+            "description": "Elimina el usuario y responde 200 con un mensaje de confirmación y los datos que tenía."
+          }
+        },
+        {
+          "name": "GET Usuario eliminado (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404: el usuario ya no existe\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{idUsuario}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET Ruta inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Responde el error en formato JSON\", () => {",
+                  "    pm.expect(pm.response.json().mensaje).to.eql(\"La ruta solicitada no existe\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rutainexistente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rutainexistente"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "idUsuario",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idMovimiento",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "correoPrueba",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
