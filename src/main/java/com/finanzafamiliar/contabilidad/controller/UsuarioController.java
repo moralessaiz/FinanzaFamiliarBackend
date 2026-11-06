@@ -1,5 +1,6 @@
 package com.finanzafamiliar.contabilidad.controller;
 
+import com.finanzafamiliar.contabilidad.model.RespuestaEliminacion;
 import com.finanzafamiliar.contabilidad.model.Usuario;
 import com.finanzafamiliar.contabilidad.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -66,10 +67,11 @@ public class UsuarioController {
         return usuarioService.actualizarUsuario(id, usuario);
     }
 
-    /** DELETE - Elimina un usuario. Responde 204 (No Content). */
+    /** DELETE - Elimina un usuario. Responde 200 (OK) con un mensaje de confirmacion y los datos eliminados. */
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminarUsuario(@PathVariable Long id) {
-        usuarioService.eliminarUsuario(id);
+    public RespuestaEliminacion<Usuario> eliminarUsuario(@PathVariable Long id) {
+        Usuario eliminado = usuarioService.eliminarUsuario(id);
+        return new RespuestaEliminacion<>(
+                "Se eliminó el usuario " + eliminado.getNombre() + " (id " + id + ")", eliminado);
     }
 }

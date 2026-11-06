@@ -140,10 +140,16 @@ class UsuarioControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE de un usuario sin movimientos responde 204")
+    @DisplayName("DELETE de un usuario sin movimientos responde 200 con mensaje y datos eliminados")
     void eliminarUsuario() throws Exception {
+        when(usuarioService.eliminarUsuario(5L))
+                .thenReturn(new Usuario(5L, "Laura Morales", "laura@correo.com", "Integrante"));
+
         mockMvc.perform(delete("/api/usuarios/5"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mensaje").value("Se eliminó el usuario Laura Morales (id 5)"))
+                .andExpect(jsonPath("$.eliminado.idUsuario").value(5))
+                .andExpect(jsonPath("$.eliminado.correo").value("laura@correo.com"));
 
         verify(usuarioService).eliminarUsuario(5L);
     }

@@ -1,6 +1,7 @@
 package com.finanzafamiliar.contabilidad.controller;
 
 import com.finanzafamiliar.contabilidad.model.Movimiento;
+import com.finanzafamiliar.contabilidad.model.RespuestaEliminacion;
 import com.finanzafamiliar.contabilidad.model.ResumenMovimientos;
 import com.finanzafamiliar.contabilidad.service.MovimientoService;
 import jakarta.validation.Valid;
@@ -73,10 +74,11 @@ public class MovimientoController {
         return movimientoService.actualizarMovimiento(id, movimiento);
     }
 
-    /** DELETE - Elimina un movimiento. Responde 204 (No Content). */
+    /** DELETE - Elimina un movimiento. Responde 200 (OK) con un mensaje de confirmacion y los datos eliminados. */
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminarMovimiento(@PathVariable Long id) {
-        movimientoService.eliminarMovimiento(id);
+    public RespuestaEliminacion<Movimiento> eliminarMovimiento(@PathVariable Long id) {
+        Movimiento eliminado = movimientoService.eliminarMovimiento(id);
+        return new RespuestaEliminacion<>(
+                "Se eliminó el movimiento \"" + eliminado.getConcepto() + "\" (id " + id + ")", eliminado);
     }
 }

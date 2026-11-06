@@ -83,8 +83,9 @@ public class UsuarioService {
      * @throws RecursoNoEncontradoException si el usuario no existe (404).
      * @throws ConflictoException si el usuario tiene movimientos (409). Asi se da un
      *                            mensaje claro en lugar del error de llave foranea de MySQL.
+     * @return los datos que tenia el usuario eliminado.
      */
-    public void eliminarUsuario(Long idUsuario) {
+    public Usuario eliminarUsuario(Long idUsuario) {
         Usuario usuario = buscarPorId(idUsuario);
         int cantidadMovimientos = movimientoRepository.contarPorUsuario(idUsuario);
         if (cantidadMovimientos > 0) {
@@ -92,6 +93,7 @@ public class UsuarioService {
                     + cantidadMovimientos + " movimiento(s) registrado(s). Elimine primero sus movimientos.");
         }
         usuarioRepository.eliminar(idUsuario);
+        return usuario;
     }
 
     /**

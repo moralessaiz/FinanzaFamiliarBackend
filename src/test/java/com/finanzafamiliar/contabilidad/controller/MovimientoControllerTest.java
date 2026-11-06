@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -53,6 +54,20 @@ class MovimientoControllerTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.idMovimiento").value(10));
+    }
+
+    @Test
+    @DisplayName("DELETE de un movimiento responde 200 con mensaje y datos eliminados")
+    void eliminarMovimiento() throws Exception {
+        Movimiento eliminado = new Movimiento();
+        eliminado.setIdMovimiento(12L);
+        eliminado.setConcepto("Mercado semanal");
+        when(movimientoService.eliminarMovimiento(12L)).thenReturn(eliminado);
+
+        mockMvc.perform(delete("/api/movimientos/12"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mensaje").value("Se eliminó el movimiento \"Mercado semanal\" (id 12)"))
+                .andExpect(jsonPath("$.eliminado.idMovimiento").value(12));
     }
 
     @Test
