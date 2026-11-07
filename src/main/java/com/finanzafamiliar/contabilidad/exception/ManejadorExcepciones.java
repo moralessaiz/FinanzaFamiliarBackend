@@ -3,6 +3,7 @@ package com.finanzafamiliar.contabilidad.exception;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.finanzafamiliar.contabilidad.model.RespuestaError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -37,7 +38,7 @@ public class ManejadorExcepciones {
 
     /** 400 - Algun campo no cumple las anotaciones de validacion (@NotBlank, @Size, @Email...). */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> manejarValidacion(MethodArgumentNotValidException excepcion) {
+    public ResponseEntity<RespuestaError> manejarValidacion(MethodArgumentNotValidException excepcion) {
         Map<String, String> errores = new LinkedHashMap<>();
         excepcion.getBindingResult().getFieldErrors()
                 .forEach(error -> errores.putIfAbsent(error.getField(), error.getDefaultMessage()));
@@ -46,7 +47,7 @@ public class ManejadorExcepciones {
 
     /** 400 - El JSON esta mal escrito o un valor no tiene el tipo esperado (por ejemplo, una fecha invalida). */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, Object>> manejarJsonInvalido(HttpMessageNotReadableException excepcion) {
+    public ResponseEntity<RespuestaError> manejarJsonInvalido(HttpMessageNotReadableException excepcion) {
         if (excepcion.getCause() instanceof UnrecognizedPropertyException desconocido) {
             return responder(HttpStatus.BAD_REQUEST, "Datos inválidos",
                     Map.of(desconocido.getPropertyName(), "Este campo no existe"));
@@ -64,32 +65,32 @@ public class ManejadorExcepciones {
 
     /** 400 - Un parametro de la URL no tiene el tipo esperado (por ejemplo /api/usuarios/abc). */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Map<String, Object>> manejarParametroInvalido(MethodArgumentTypeMismatchException excepcion) {
+    public ResponseEntity<RespuestaError> manejarParametroInvalido(MethodArgumentTypeMismatchException excepcion) {
         return responder(HttpStatus.BAD_REQUEST,
                 "El parámetro '" + excepcion.getName() + "' no tiene un valor válido", null);
     }
 
     /** 400 - Los datos no cumplen una regla del negocio. */
     @ExceptionHandler(ReglaNegocioException.class)
-    public ResponseEntity<Map<String, Object>> manejarReglaNegocio(ReglaNegocioException excepcion) {
+    public ResponseEntity<RespuestaError> manejarReglaNegocio(ReglaNegocioException excepcion) {
         return responder(HttpStatus.BAD_REQUEST, excepcion.getMessage(), null);
     }
 
     /** 404 - El usuario o movimiento buscado no existe. */
     @ExceptionHandler(RecursoNoEncontradoException.class)
-    public ResponseEntity<Map<String, Object>> manejarNoEncontrado(RecursoNoEncontradoException excepcion) {
+    public ResponseEntity<RespuestaError> manejarNoEncontrado(RecursoNoEncontradoException excepcion) {
         return responder(HttpStatus.NOT_FOUND, excepcion.getMessage(), null);
     }
 
     /** 409 - La operacion choca con datos existentes (correo repetido, usuario con movimientos). */
     @ExceptionHandler(ConflictoException.class)
-    public ResponseEntity<Map<String, Object>> manejarConflicto(ConflictoException excepcion) {
+    public ResponseEntity<RespuestaError> manejarConflicto(ConflictoException excepcion) {
         return responder(HttpStatus.CONFLICT, excepcion.getMessage(), null);
     }
 
     /** 409 - MySQL rechazo la operacion por una llave foranea u otra restriccion de la tabla. */
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, Object>> manejarIntegridad(DataIntegrityViolationException excepcion) {
+    public ResponseEntity<RespuestaError> manejarIntegridad(DataIntegrityViolationException excepcion) {
         LOGGER.warn("Restriccion de la base de datos: {}", excepcion.getMostSpecificCause().getMessage());
         return responder(HttpStatus.CONFLICT,
                 "La operación no cumple las reglas de la base de datos (datos relacionados o inexistentes)", null);
@@ -97,7 +98,7 @@ public class ManejadorExcepciones {
 
     /** 503 - No hay conexion con MySQL (servicio apagado, usuario o clave incorrectos). */
     @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<Map<String, Object>> manejarBaseDatos(DataAccessException excepcion) {
+    public ResponseEntity<RespuestaError> manejarBaseDatos(DataAccessException excepcion) {
         LOGGER.error("Error de acceso a la base de datos", excepcion);
         return responder(HttpStatus.SERVICE_UNAVAILABLE,
                 "No fue posible acceder a la base de datos. Verifique que MySQL esté encendido.", null);
@@ -109,7 +110,7 @@ public class ManejadorExcepciones {
      * registran en la consola para poder revisarlos.
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> manejarGeneral(Exception excepcion) {
+    public ResponseEntity<RespuestaError> manejarGeneral(Exception excepcion) {
         if (excepcion instanceof ErrorResponse errorSpring) {
             HttpStatus estado = HttpStatus.valueOf(errorSpring.getStatusCode().value());
             String mensaje = estado == HttpStatus.NOT_FOUND
@@ -122,12 +123,7 @@ public class ManejadorExcepciones {
     }
 
     /** Arma el cuerpo JSON de la respuesta de error. */
-    private ResponseEntity<Map<String, Object>> responder(HttpStatus estado, String mensaje, Map<String, String> errores) {
-        Map<String, Object> cuerpo = new LinkedHashMap<>();
-        cuerpo.put("mensaje", mensaje);
-        if (errores != null && !errores.isEmpty()) {
-            cuerpo.put("errores", errores);
-        }
-        return ResponseEntity.status(estado).body(cuerpo);
+    private ResponseEntity<RespuestaError> responder(HttpStatus estado, String mensaje, Map<String, String> errores) {
+        return ResponseEntity.status(estado).body(new RespuestaError(mensaje, errores));
     }
 }

@@ -1,5 +1,6 @@
 package com.finanzafamiliar.contabilidad.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -14,22 +15,30 @@ import jakarta.validation.constraints.Size;
  * RegistrarUsuarioServlet: Spring las revisa antes de llamar al controlador
  * y, si algun dato no las cumple, responde 400 con el mensaje de cada campo.
  */
+@Schema(description = "Integrante del grupo familiar")
 public class Usuario {
 
+    @Schema(description = "Identificador asignado por la base de datos. No se envía al crear", example = "3", accessMode = Schema.AccessMode.READ_ONLY)
     private Long idUsuario;
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 80, message = "El nombre no puede superar 80 caracteres")
     @Pattern(regexp = "^[\\p{L} ]+$", message = "El nombre solo puede contener letras y espacios")
+    @Schema(description = "Nombre completo. Solo letras y espacios, máximo 80 caracteres", example = "Laura Morales",
+            requiredMode = Schema.RequiredMode.REQUIRED, maxLength = 80)
     private String nombre;
 
     @NotBlank(message = "El correo es obligatorio")
     @Size(max = 100, message = "El correo no puede superar 100 caracteres")
     @Email(regexp = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", message = "El correo electrónico no es válido")
+    @Schema(description = "Correo electrónico. No se puede repetir entre usuarios; se guarda en minúscula",
+            example = "laura.morales@correo.com", requiredMode = Schema.RequiredMode.REQUIRED, maxLength = 100)
     private String correo;
 
     @NotBlank(message = "El rol es obligatorio")
     @Pattern(regexp = "Administrador|Integrante", message = "El rol debe ser Administrador o Integrante")
+    @Schema(description = "Rol dentro del grupo familiar", example = "Integrante",
+            allowableValues = {"Administrador", "Integrante"}, requiredMode = Schema.RequiredMode.REQUIRED)
     private String rol;
 
     public Usuario() {
