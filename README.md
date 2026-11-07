@@ -12,6 +12,7 @@ Módulos de **Usuarios** y **Movimientos** (ingresos y gastos del hogar) expuest
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
 ![JDBC](https://img.shields.io/badge/JDBC-JdbcTemplate-00758F)
 ![JUnit](https://img.shields.io/badge/JUnit-5-25A162?logo=junit5&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-OpenAPI%203-85EA2D?logo=swagger&logoColor=black)
 ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ%20IDEA-compatible-000000?logo=intellijidea&logoColor=white)
 
 **SENA · Tecnólogo en Análisis y Desarrollo de Software (ADSO) · Ficha 3336193**
@@ -233,6 +234,26 @@ La colección crea un usuario y un movimiento de prueba, guarda sus id en variab
 ## 🔌 Servicios de la API
 
 Dirección base: **`http://localhost:8080/api`**
+
+### 📘 Documentación interactiva (Swagger)
+
+Con la API encendida, la documentación completa de cada servicio está en:
+
+| Página | Dirección | Para qué sirve |
+|:--|:--|:--|
+| **Swagger UI** | http://localhost:8080/swagger-ui.html | Página web con todos los servicios agrupados por módulo. Cada uno muestra su descripción, parámetros, cuerpo JSON, códigos de respuesta y ejemplos. Con **Try it out → Execute** se puede probar desde el navegador |
+| **OpenAPI (JSON)** | http://localhost:8080/v3/api-docs | La misma documentación en el formato estándar OpenAPI 3. Se puede importar en Postman (**Import → Link**) |
+
+La documentación se genera con [springdoc-openapi](https://springdoc.org/) a partir del código:
+
+| Dónde | Qué documenta |
+|:--|:--|
+| [`OpenApiConfig.java`](src/main/java/com/finanzafamiliar/contabilidad/config/OpenApiConfig.java) | Título, versión, descripción general, servidor y módulos (tags) |
+| Controladores (`@Tag`, `@Operation`, `@Parameter`, `@ApiResponse`) | Qué hace cada servicio, sus parámetros y cada código de respuesta con un ejemplo |
+| [`EjemplosApi.java`](src/main/java/com/finanzafamiliar/contabilidad/controller/EjemplosApi.java) | Los JSON de ejemplo, con los mismos mensajes que devuelve la API |
+| Modelos (`@Schema`) | Cada campo: descripción, ejemplo, si es obligatorio y si es de solo lectura |
+
+> 💡 Si cambias un servicio, actualiza también sus anotaciones: así la documentación nunca queda desactualizada.
 
 ### 👤 Usuarios — `UsuarioController`
 
@@ -486,11 +507,13 @@ FinanzaFamiliarBackend/
     │   │   ├── FinanzaFamiliarApplication.java    ← Clase principal (arranca Spring Boot)
     │   │   ├── 📁 config/
     │   │   │   ├── CorsConfig.java                ← Permite peticiones desde Angular (puerto 4200)
+    │   │   │   ├── OpenApiConfig.java             ← Datos generales de la documentación Swagger
     │   │   │   └── VerificacionConexion.java      ← Prueba la conexión a MySQL al iniciar
     │   │   ├── 📁 controller/
     │   │   │   ├── UsuarioController.java         ← /api/usuarios
     │   │   │   ├── MovimientoController.java      ← /api/movimientos
-    │   │   │   └── CategoriaController.java       ← /api/categorias
+    │   │   │   ├── CategoriaController.java       ← /api/categorias
+    │   │   │   └── EjemplosApi.java               ← JSON de ejemplo para Swagger
     │   │   ├── 📁 service/
     │   │   │   ├── UsuarioService.java            ← Reglas de usuarios
     │   │   │   └── MovimientoService.java         ← Reglas de movimientos
@@ -500,14 +523,16 @@ FinanzaFamiliarBackend/
     │   │   │   └── CategoriaRepository.java       ← SQL de la tabla categoria
     │   │   ├── 📁 model/
     │   │   │   ├── Usuario.java · Movimiento.java · Categoria.java
-    │   │   │   └── ResumenMovimientos.java        ← record con los totales
+    │   │   │   ├── ResumenMovimientos.java        ← record con los totales
+    │   │   │   ├── RespuestaEliminacion.java      ← respuesta de los DELETE
+    │   │   │   └── RespuestaError.java            ← respuesta de los errores
     │   │   └── 📁 exception/
     │   │       ├── ManejadorExcepciones.java      ← Convierte los errores en JSON
     │   │       ├── RecursoNoEncontradoException.java   (404)
     │   │       ├── ReglaNegocioException.java          (400)
     │   │       └── ConflictoException.java             (409)
     │   └── 📁 resources/
-    │       └── application.properties             ← Puerto, conexión a MySQL y CORS
+    │       └── application.properties             ← Puerto, conexión a MySQL, CORS y Swagger
     └── 📁 test/java/com/finanzafamiliar/contabilidad/
         ├── 📁 controller/   UsuarioControllerTest, MovimientoControllerTest
         └── 📁 service/      UsuarioServiceTest, MovimientoServiceTest

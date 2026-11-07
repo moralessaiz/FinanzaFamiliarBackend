@@ -1,7 +1,11 @@
 package com.finanzafamiliar.contabilidad.controller;
 
+import com.finanzafamiliar.contabilidad.config.OpenApiConfig;
 import com.finanzafamiliar.contabilidad.model.Categoria;
 import com.finanzafamiliar.contabilidad.repository.CategoriaRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +20,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/categorias")
+@Tag(name = OpenApiConfig.TAG_CATEGORIAS)
 public class CategoriaController {
 
     private final CategoriaRepository categoriaRepository;
@@ -25,6 +30,10 @@ public class CategoriaController {
     }
 
     /** READ - Lista todas las categorias. */
+    @Operation(summary = "Listar categorías",
+            description = "Devuelve las categorías de ingreso y gasto, ordenadas por tipo y nombre. "
+                    + "Su `idCategoria` es el que se envía al registrar un movimiento.")
+    @ApiResponse(responseCode = "200", description = "Lista de categorías")
     @GetMapping
     public List<Categoria> listarCategorias() {
         return categoriaRepository.consultarTodas();
